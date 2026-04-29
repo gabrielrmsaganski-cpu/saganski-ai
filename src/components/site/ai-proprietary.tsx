@@ -161,12 +161,12 @@ export function AIProprietary() {
                   online
                 </span>
               </div>
-              <AICoreScene className="-mt-2" height={420} />
-              <div className="absolute inset-x-6 bottom-5 grid grid-cols-3 gap-2 text-[10px] font-mono uppercase tracking-[0.16em] text-foreground/55">
-                <Telemetry label="latency" value="38ms" tone="cyan" />
-                <Telemetry label="ctx tokens" value="128k" tone="violet" />
-                <Telemetry label="agents" value="ready" tone="emerald" />
-              </div>
+              <AICoreScene className="-mt-2" height={460} />
+              <LiveTelemetry />
+              <CornerHUD position="tl" label="model" stream={["GPT-5.4-mini","Claude 4.7","Llama 3.1","o4-mini"]} />
+              <CornerHUD position="tr" label="status" stream={["streaming","embedding","retrieving","reasoning"]} />
+              <CornerHUD position="bl" label="vector store" stream={["pgvector","qdrant","pinecone","custom"]} />
+              <CornerHUD position="br" label="region" stream={["BR-SE","US-E","EU-W","priv-VPC"]} />
             </div>
           </motion.div>
 
@@ -279,7 +279,64 @@ function PipelineStep({
   );
 }
 
-function Telemetry({
+function LiveTelemetry() {
+  const [tick, setTick] = React.useState(0);
+  React.useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1700);
+    return () => clearInterval(id);
+  }, []);
+  const latency = 28 + ((tick * 7) % 22);
+  const ctx = 32 + ((tick * 13) % 96);
+  const ops = 1.2 + (((tick * 31) % 47) / 47) * 1.6;
+  return (
+    <div className="absolute inset-x-6 bottom-5 z-10 grid grid-cols-3 gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/55">
+      <TelemetryPill label="latency" value={`${latency}ms`} tone="cyan" />
+      <TelemetryPill label="ctx tokens" value={`${ctx}k`} tone="violet" />
+      <TelemetryPill label="ops/sec" value={ops.toFixed(2)} tone="emerald" />
+    </div>
+  );
+}
+
+function CornerHUD({
+  position,
+  label,
+  stream,
+}: {
+  position: "tl" | "tr" | "bl" | "br";
+  label: string;
+  stream: string[];
+}) {
+  const [i, setI] = React.useState(0);
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      setI((x) => (x + 1) % stream.length);
+    }, 2400);
+    return () => clearInterval(id);
+  }, [stream.length]);
+  const posClass = {
+    tl: "left-4 top-14",
+    tr: "right-4 top-14",
+    bl: "left-4 bottom-24",
+    br: "right-4 bottom-24",
+  }[position];
+  const align =
+    position === "tr" || position === "br" ? "items-end text-right" : "items-start";
+  return (
+    <div
+      className={`pointer-events-none absolute z-10 hidden flex-col gap-0.5 rounded-lg border border-white/10 bg-black/35 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.18em] text-foreground/60 backdrop-blur-md md:flex ${posClass} ${align}`}
+    >
+      <span className="flex items-center gap-1 text-[8px] text-foreground/45">
+        <span className="size-1 rounded-full bg-brand-cyan animate-pulse-soft" />
+        {label}
+      </span>
+      <span className="text-[11px] font-semibold tracking-tight text-brand-cyan">
+        {stream[i]}
+      </span>
+    </div>
+  );
+}
+
+function TelemetryPill({
   label,
   value,
   tone,
@@ -296,12 +353,14 @@ function Telemetry({
         : "border-emerald-400/30 text-emerald-300";
   return (
     <div
-      className={`rounded-xl border ${ring} bg-black/30 px-3 py-2 backdrop-blur-md`}
+      className={`rounded-xl border ${ring} bg-black/35 px-3 py-2 backdrop-blur-md`}
     >
       <div className="text-[9px] tracking-[0.24em] text-foreground/50">
         {label}
       </div>
-      <div className="mt-0.5 font-mono text-[12px] font-semibold">{value}</div>
+      <div className="mt-0.5 font-mono text-[12px] font-semibold tabular-nums">
+        {value}
+      </div>
     </div>
   );
 }
