@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 function NeuralCore() {
   const groupRef = React.useRef<THREE.Group>(null!);
   const linesRef = React.useRef<THREE.LineSegments>(null!);
+  const targetRot = React.useRef({ x: 0, y: 0 });
+  const { pointer } = useThree();
 
   const { positions, indices, count } = React.useMemo(() => {
     const count = 90;
@@ -41,9 +43,13 @@ function NeuralCore() {
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
+    targetRot.current.y = t * 0.08 + pointer.x * 0.4;
+    targetRot.current.x = Math.sin(t * 0.18) * 0.18 + pointer.y * 0.25;
     if (groupRef.current) {
-      groupRef.current.rotation.y = t * 0.08;
-      groupRef.current.rotation.x = Math.sin(t * 0.18) * 0.18;
+      groupRef.current.rotation.y +=
+        (targetRot.current.y - groupRef.current.rotation.y) * 0.06;
+      groupRef.current.rotation.x +=
+        (targetRot.current.x - groupRef.current.rotation.x) * 0.06;
     }
     if (linesRef.current?.material) {
       const m = linesRef.current.material as THREE.LineBasicMaterial;

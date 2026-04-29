@@ -85,6 +85,18 @@ const config: Config = {
           "0%,100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-6px)" },
         },
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+        "scroll-line": {
+          "0%": { transform: "translateY(-100%)" },
+          "100%": { transform: "translateY(100%)" },
+        },
+        "border-glow": {
+          "0%": { backgroundPosition: "0% 50%" },
+          "100%": { backgroundPosition: "200% 50%" },
+        },
       },
       animation: {
         "fade-in": "fade-in 700ms ease-out forwards",
@@ -92,6 +104,9 @@ const config: Config = {
         shimmer: "shimmer 2.4s linear infinite",
         "spin-slow": "spin-slow 18s linear infinite",
         float: "float 6s ease-in-out infinite",
+        marquee: "marquee 60s linear infinite",
+        "scroll-line": "scroll-line 4s linear infinite",
+        "border-glow": "border-glow 6s linear infinite",
       },
     },
   },
