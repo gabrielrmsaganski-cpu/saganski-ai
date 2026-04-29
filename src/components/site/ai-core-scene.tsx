@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Text } from "@react-three/drei";
+import { Billboard, Text } from "@react-three/drei";
 import * as THREE from "three";
 
 // ── Shaders ────────────────────────────────────────────────────────────────
@@ -288,18 +288,21 @@ function KnowledgeNode({ def }: { def: NodeDef }) {
         <sphereGeometry args={[0.06, 18, 18]} />
         <meshBasicMaterial color={def.color} transparent opacity={0.95} />
       </mesh>
-      <Text
-        position={[0, 0.18, 0]}
-        fontSize={0.085}
-        color="#e7f6ff"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.005}
-        outlineColor="#020412"
-        material-toneMapped={false}
-      >
-        {def.label}
-      </Text>
+      <React.Suspense fallback={null}>
+        <Billboard position={[0, 0.18, 0]}>
+          <Text
+            fontSize={0.085}
+            color="#e7f6ff"
+            anchorX="center"
+            anchorY="middle"
+            outlineWidth={0.005}
+            outlineColor="#020412"
+            material-toneMapped={false}
+          >
+            {def.label}
+          </Text>
+        </Billboard>
+      </React.Suspense>
     </group>
   );
 }
@@ -595,6 +598,41 @@ function StarField() {
 
 // ── Public component ───────────────────────────────────────────────────────
 
+function FallbackVisual({ height }: { height: number }) {
+  return (
+    <div
+      className="relative h-full w-full overflow-hidden"
+      style={{ height }}
+      aria-hidden
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 50%, rgba(59,130,246,0.45) 0%, rgba(34,211,238,0.25) 25%, rgba(168,85,247,0.18) 45%, transparent 75%)",
+        }}
+      />
+      <div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-40 rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(34,211,238,0.6), rgba(59,130,246,0.25) 60%, transparent 80%)",
+          filter: "blur(20px)",
+        }}
+      />
+      <div className="pointer-events-none absolute inset-0 grid grid-cols-12 gap-px opacity-25">
+        {Array.from({ length: 12 * 8 }).map((_, i) => (
+          <span
+            key={i}
+            className="block h-full w-full bg-white/[0.02]"
+            style={{ animationDelay: `${(i % 12) * 60}ms` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function AICoreScene({
   className,
   height = 480,
@@ -602,93 +640,109 @@ export function AICoreScene({
   className?: string;
   height?: number;
 }) {
-  const [enabled, setEnabled] = React.useState(true);
+  const [reduce, setReduce] = React.useState(false);
+  const [webglOk, setWebglOk] = React.useState(true);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setEnabled(!mq.matches);
+    const update = () => setReduce(mq.matches);
     update();
     mq.addEventListener?.("change", update);
+
+    // Detect WebGL availability up-front so we can show a fallback instantly.
+    try {
+      const test = document.createElement("canvas");
+      const ctx =
+        test.getContext("webgl2") ||
+        test.getContext("webgl") ||
+        test.getContext("experimental-webgl");
+      setWebglOk(!!ctx);
+    } catch {
+      setWebglOk(false);
+    }
+
     return () => mq.removeEventListener?.("change", update);
   }, []);
 
-  if (!enabled) {
+  if (reduce || !webglOk) {
     return (
-      <div
-        className={className}
-        style={{
-          height,
-          background:
-            "radial-gradient(ellipse at center, rgba(34,211,238,0.32), transparent 65%)",
-        }}
-        aria-hidden
-      />
+      <div className={className} style={{ height }}>
+        <FallbackVisual height={height} />
+      </div>
     );
   }
 
   return (
-    <div className={className} style={{ height }} aria-hidden>
-      <Canvas
-        dpr={[1, 1.6]}
-        camera={{ position: [0, 0.6, 5.4], fov: 48 }}
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: "high-performance",
-        }}
-        style={{ background: "transparent" }}
-      >
-        <ambientLight intensity={0.5} />
-        <pointLight
-          position={[3, 3, 3]}
-          intensity={1.2}
-          color={new THREE.Color("#60a5fa")}
-        />
-        <pointLight
-          position={[-3, -2, 2]}
-          intensity={0.85}
-          color={new THREE.Color("#a855f7")}
-        />
+    <div className={className} style={{ height, position: "relative" }}>
+      <FallbackVisual height={height} />
+      <div className="absolute inset-0">
+        <Canvas
+          dpr={[1, 1.6]}
+          camera={{ position: [0, 0.6, 5.4], fov: 48 }}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance",
+          }}
+          onCreated={({ gl }) => {
+            gl.setClearColor(new THREE.Color("#000000"), 0);
+          }}
+          style={{ background: "transparent" }}
+        >
+          <ambientLight intensity={0.5} />
+          <pointLight
+            position={[3, 3, 3]}
+            intensity={1.2}
+            color={new THREE.Color("#60a5fa")}
+          />
+          <pointLight
+            position={[-3, -2, 2]}
+            intensity={0.85}
+            color={new THREE.Color("#a855f7")}
+          />
 
-        <StarField />
-        <ParticleCloud />
+          <StarField />
+          <ParticleCloud />
 
-        <OuterCage />
-        <CoreWireframe />
-        <CoreSphere />
-        <InnerCore />
+          <OuterCage />
+          <CoreWireframe />
+          <CoreSphere />
+          <InnerCore />
 
-        <PulseWaves />
+          <PulseWaves />
 
-        <OrbitalRing
-          radius={1.7}
-          speed={0.45}
-          tilt={[0.3, 0, 0.1]}
-          color="#22d3ee"
-          particleCount={130}
-        />
-        <OrbitalRing
-          radius={2.15}
-          speed={-0.28}
-          tilt={[-0.4, 0.5, 0]}
-          color="#a855f7"
-          particleCount={100}
-        />
-        <OrbitalRing
-          radius={2.6}
-          speed={0.18}
-          tilt={[0.2, -0.3, 0.4]}
-          color="#3b82f6"
-          particleCount={70}
-        />
+          <OrbitalRing
+            radius={1.7}
+            speed={0.45}
+            tilt={[0.3, 0, 0.1]}
+            color="#22d3ee"
+            particleCount={130}
+          />
+          <OrbitalRing
+            radius={2.15}
+            speed={-0.28}
+            tilt={[-0.4, 0.5, 0]}
+            color="#a855f7"
+            particleCount={100}
+          />
+          <OrbitalRing
+            radius={2.6}
+            speed={0.18}
+            tilt={[0.2, -0.3, 0.4]}
+            color="#3b82f6"
+            particleCount={70}
+          />
 
-        {knowledgeNodes.map((def, i) => (
-          <KnowledgeNode key={i} def={def} />
-        ))}
+          <React.Suspense fallback={null}>
+            {knowledgeNodes.map((def, i) => (
+              <KnowledgeNode key={i} def={def} />
+            ))}
+          </React.Suspense>
 
-        <EnergyBeams />
-      </Canvas>
+          <EnergyBeams />
+        </Canvas>
+      </div>
     </div>
   );
 }
