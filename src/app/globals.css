@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 224 47% 4%;
+    --foreground: 210 40% 98%;
+
+    --card: 224 40% 6%;
+    --card-foreground: 210 40% 98%;
+
+    --muted: 222 28% 12%;
+    --muted-foreground: 217 18% 70%;
+
+    --border: 217 25% 18%;
+    --input: 217 25% 18%;
+    --ring: 188 94% 56%;
+
+    --primary: 192 95% 56%;
+    --primary-foreground: 224 47% 4%;
+
+    --secondary: 222 28% 12%;
+    --secondary-foreground: 210 40% 98%;
+
+    --accent: 263 70% 65%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 210 40% 98%;
+
+    --radius: 0.85rem;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased font-sans selection:bg-brand-cyan/30 selection:text-white;
+    background-image:
+      radial-gradient(ellipse 60% 35% at 50% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 100% 0%, rgba(139, 92, 246, 0.14), transparent 65%),
+      radial-gradient(ellipse 60% 50% at 0% 100%, rgba(34, 211, 238, 0.12), transparent 65%),
+      linear-gradient(180deg, #03060f 0%, #050913 60%, #03060f 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.18);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.3);
+  }
+}
+
+@layer components {
+  .glass {
+    @apply border border-white/10 bg-white/[0.03] backdrop-blur-md;
+  }
+  .glass-strong {
+    @apply border border-white/12 bg-white/[0.05] backdrop-blur-xl;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .gradient-text {
+    background: linear-gradient(
+      120deg,
+      #ffffff 0%,
+      #c7d4ff 30%,
+      #67e8f9 50%,
+      #c7b8ff 78%,
+      #ffffff 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    background-size: 200% 200%;
+    animation: gradient-shift 9s ease-in-out infinite;
+  }
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .section-anchor {
+    scroll-margin-top: 6rem;
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent 70%);
+  }
+
+  .glow-ring {
+    box-shadow:
+      0 0 0 1px rgba(34, 211, 238, 0.18) inset,
+      0 0 30px -8px rgba(34, 211, 238, 0.5),
+      0 0 80px -25px rgba(139, 92, 246, 0.55);
+  }
+}
+
+@layer utilities {
+  .mask-fade-bottom {
+    mask-image: linear-gradient(180deg, black 70%, transparent 100%);
+  }
+  .mask-fade-radial {
+    mask-image: radial-gradient(ellipse at center, black 60%, transparent 100%);
+  }
+}
